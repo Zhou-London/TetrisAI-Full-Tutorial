@@ -162,10 +162,6 @@ class MyPlayer(Player):
         best_sets = []
         tmp = 0
 
-
-        
-
-
         for rot in range(9):
             if board.falling is None:
                 return Direction.Down
