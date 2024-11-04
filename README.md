@@ -143,7 +143,7 @@ Hell yeah! Let's keep improving it!
                 best_command_sets = memory
             
             memory = []
-            return memory
+        return memory
 
 Well done! We have the framework of the whole algorithm!
 
