@@ -3,30 +3,43 @@ A simple AI using decision tree to play Tetris automatically
 
 ## Run and Compile
 Recommended: python3 visual-pygame.py
+
 Works as well: python3 visual.py
 
 ## Introduction
 -I am happy now you don't have to write it on you own
+
 -The interface is implemented on OOP
+
 -Algorithm is written in a function in Player.py
+
 -400 blocks in total
+
 -Discard and bombs supported
+
 -25 score for one-line-elinmation, while 1600 for four-lines
+
 ![alt text](image.png)
 
 ## Feature
 -Performance: Over 20,041 and still a long way to go!
+
 -Clearness: Easily understand
+
 -Short: Only 200 lines of coding
 
 ## Files Included
 -Player.py: Where implements the AI and you should really care about
+
 -Board.py: Where implements the game board
+
 -All the other files: You do not need to care about
 
 ## Algorithm
 -Iterates every possible choice using thousands of cloned game board
+
 -Go through a decision tree and find the best choice
+
 -Return the choice to the interface
 
 # FULL TUTORIAL
