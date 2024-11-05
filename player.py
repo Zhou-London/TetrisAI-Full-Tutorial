@@ -80,25 +80,17 @@ class MyPlayer(Player):
 
     
     def check_holes(self,board): #Third assesment: Holes
-        column_list = self.get_column_height_list(board)
-        num_of_holes = 0
+        holes = 0
         for x in range(board.width):
-            if column_list[x] == 0:
-                continue
-            for height in range(column_list[x]):
-                y = board.height - height
-                if (x,y) not in board.cells:
-                    
-                    if (self.is_hole(x,y,board) == 1):
-                        num_of_holes = num_of_holes + 1
+            search = 0
+            for y in range(board.height):
+                if(x,y) in board.cells:
+                    search = 1
+                
+                if search == 1 and (x,y) not in board.cells:
+                    holes = holes + 1
 
-
-                    if (x<9):
-                        if(self.is_hole(x,y,board) == 2 and self.is_hole(x+1,y,board) == 3):
-                            num_of_holes = num_of_holes + 2
-
-
-        return num_of_holes
+        return holes
 
             
     
@@ -264,9 +256,8 @@ class MyPlayer(Player):
 
                 score =  (-0.510066 * self.sum_column_height(clone_2)
                           + 0.760666 * self.check_elinmating(clone_2, board)
-                          - 0.36663 * self.check_holes(clone_2) #0.35663
+                          - 0.35663 * self.check_holes(clone_2) #0.35663
                           - 0.184483 * self.var_column_height(clone_2)
-
                           )
                 
                 if score > best_score:
@@ -279,8 +270,6 @@ class MyPlayer(Player):
 
         if self.sum_column_height(tmp) > 0:
             self.trigger_bomb = 1
-
-        print(self.check_holes(tmp))
 
         return best_sets
 
