@@ -67,7 +67,16 @@ class MyPlayer(Player):
         else:
             right = True
 
-        return left and right
+        if left == True and right == True:
+            return 1
+        
+        if left == True:
+            return 2
+        
+        if right == True:
+            return 3
+        
+        return 0
 
     
     def check_holes(self,board): #Third assesment: Holes
@@ -76,30 +85,69 @@ class MyPlayer(Player):
         for x in range(board.width):
             if column_list[x] == 0:
                 continue
-            for y in range(column_list[x]):
-                Y = board.height - y
-                if (x,Y) not in board.cells:
-                    if self.is_hole(x,Y,board) == True:
+            for height in range(column_list[x]):
+                y = board.height - height
+                if (x,y) not in board.cells:
+                    
+                    if (self.is_hole(x,y,board) == 1):
                         num_of_holes = num_of_holes + 1
+
+
+                    if (x<9):
+                        if(self.is_hole(x,y,board) == 2 and self.is_hole(x+1,y,board) == 3):
+                            num_of_holes = num_of_holes + 2
+
+
         return num_of_holes
-
-
-
 
             
     
     def check_elinmating(self,clone_board, original_board): #Fourth assesment: Lines elimnation
         gap = clone_board.score - original_board.score
         if gap > 1600:
-            return 20.0
+            return 50.0
         elif gap > 400:
-            return 3.0
+            return 10.0
         elif gap > 100:
-            return 0.5
+            return 1.0
         elif gap > 28:
-            return -7.4 #-5.0(stable 15008),-7.0(stable16537), -7.2(19728), -7.40625(20041)
+            return -5.0 #-5.0(stable 15008),-7.0(stable16537), -7.2(19728), -7.40625(20041)
         
         return 0.0
+    
+    def check_first_col(self,board):
+        height = self.calculate_single_column_height(board,0)
+        if(height == 0):
+            return 1.0
+        else:
+            return -1.0
+        
+    def check_row(self,board,y):
+        for x in range(1,10):
+            if (x,y) not in board.cells:
+                return False
+        return True
+    
+    def get_full_row(self, board):
+        full_row = 0
+        for y in range(24):
+            if self.check_row(board, y) == True:
+                full_row = full_row + 1
+            else:
+                full_row = 0
+
+            if full_row > 3:
+                return 5.0
+            elif full_row > 2:
+                return 2.0
+            elif full_row > 1:
+                return 1.0
+        return 0.0
+            
+            
+
+
+
         
     
 
@@ -216,8 +264,9 @@ class MyPlayer(Player):
 
                 score =  (-0.510066 * self.sum_column_height(clone_2)
                           + 0.760666 * self.check_elinmating(clone_2, board)
-                          - 0.35663 * self.check_holes(clone_2) #0.35663
+                          - 0.36663 * self.check_holes(clone_2) #0.35663
                           - 0.184483 * self.var_column_height(clone_2)
+
                           )
                 
                 if score > best_score:
@@ -230,6 +279,8 @@ class MyPlayer(Player):
 
         if self.sum_column_height(tmp) > 0:
             self.trigger_bomb = 1
+
+        print(self.check_holes(tmp))
 
         return best_sets
 
