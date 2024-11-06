@@ -66,17 +66,84 @@ class MyPlayer(Player):
             right = (x+1,y) in board.cells
         else:
             right = True
+        
+        return left and right
+    
+    def get_well(self,board):
+        well = 0
+        for x in range(board.width):
+            search = 1
+            for y in range(board.height):
+                if search == 1 and ((x,y) not in board.cells) and self.is_hole(x,y,board) == True:
+                    well = well + 1
+                elif((x,y) in board.cells):
+                    search = 0
 
-        if left == True and right == True:
-            return 1
-        
-        if left == True:
-            return 2
-        
-        if right == True:
-            return 3
-        
+        return well
+    
+    def get_blocked_cells(self, board):
+        cells = 0
+        height = self.get_column_height_list(board)
+        for x in range(board.width):
+            search = 0
+            for y in range(height[x]):
+                Y = 24 - y
+                if (x,Y) not in board.cells and self.is_hole(x,Y, board) == True:
+                    search = 1
+                if search == 1 and (x,Y) in board.cells:
+                    cells = cells + 1
+                
+
+        return cells
+    
+    def get_max_height(self,board):
+        height = 0
+        for y in range(board.height):
+            for x in range(board.width):
+                if (x,y) in board.cells:
+                    return board.height - y
         return 0
+    
+    def get_air_exposure(self, board):
+        count = 0
+        for y in range(board.height):
+            for x in range(board.width):
+                if(x>0) and (x<9) and (y>0) and (y<24) and (x,y) in board.cells:
+                    if(x+1,y) not in board.cells:
+                        count = count + 1
+                    if(x,y+1) not in board.cells:
+                        count = count + 1
+                    if(x-1,y) not in board.cells:
+                        count = count + 1
+                    if(x,y-1) not in board.cells:
+                        count = count + 1
+        return count
+    
+    def get_row_transition(self, board):
+        tran = 0
+        for y in range(board.height):
+            for x in range(9):
+                if ((x,y) in board.cells and (x+1,y) in board.cells) or   ((x,y) not in board.cells and (x+1,y) not in board.cells):
+                    continue
+                else:
+                    tran = tran + 1
+        return tran
+    
+
+    def get_col_transition(self, board):
+        tran = 0
+        for x in range(board.width):
+            for y in range(23):
+                if ((x,y) in board.cells and (x,y+1) in board.cells) or   ((x,y) not in board.cells and (x,y+1) not in board.cells):
+                    continue
+                else:
+                    tran = tran + 1
+        return tran
+                
+
+
+
+
 
     
     def check_holes(self,board): #Third assesment: Holes
@@ -101,9 +168,9 @@ class MyPlayer(Player):
         elif gap > 400:
             return 10.0
         elif gap > 100:
-            return 1.0
+            return 3.0
         elif gap > 28:
-            return -5.0 #-5.0(stable 15008),-7.0(stable16537), -7.2(19728), -7.40625(20041)
+            return 0.0
         
         return 0.0
     
@@ -135,7 +202,6 @@ class MyPlayer(Player):
             elif full_row > 1:
                 return 1.0
         return 0.0
-            
             
 
 
@@ -258,6 +324,13 @@ class MyPlayer(Player):
                           + 0.760666 * self.check_elinmating(clone_2, board)
                           - 0.35663 * self.check_holes(clone_2) #0.35663
                           - 0.184483 * self.var_column_height(clone_2)
+                          #- 0.05 * self.get_well(clone_2)
+                          - 0.05 * self.get_blocked_cells(clone_2)
+                          - 0.05 * self.get_max_height(clone_2)
+                          - 0.05 * self.get_row_transition(clone_2)
+                          - 0.05 * self.get_col_transition(clone_2)
+                          + 0.05 * self.calculate_single_column_height(clone_2,0)
+                          #+ 1.0 * self.check_first_col(clone_2)
                           )
                 
                 if score > best_score:
@@ -265,11 +338,13 @@ class MyPlayer(Player):
                     best_score = score
                     best_sets = sets
 
-        if tmp.score > 10000:
+        if tmp.score > 8000:
             self.trigger_dis = 1
 
         if self.sum_column_height(tmp) > 0:
             self.trigger_bomb = 1
+        #time.sleep(3)
+        print(self.calculate_single_column_height(tmp,0))
 
         return best_sets
 
