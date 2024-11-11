@@ -13,6 +13,9 @@ class MyPlayer(Player):
         self.value = 0
         self.trigger_dis = 0
         self.trigger_bomb = 0
+        self.best_sets_1 = []
+        self.best_sets_2 = []
+
         
     def print_board(self, board):
         print("--------")
@@ -167,9 +170,9 @@ class MyPlayer(Player):
             return 50.0
         elif gap > 400:
             return 10.0
-        elif gap > 100:
-            return 3.0
-        elif gap > 28:
+        elif gap > 200:
+            return 1.0
+        elif gap > 50:
             return 0.0
         
         return 0.0
@@ -261,94 +264,72 @@ class MyPlayer(Player):
         return [Action.Bomb]
     
 
-
-
     def choose_action(self, board):
+
+        if(self.best_sets_2):
+            tmp_sets = self.best_sets_2
+            self.best_sets_2 = []
+            return tmp_sets
+
+
         best_score = -1000
         best_sets = []
-        tmp = 0
-
-        for rot in range(9):
-            if board.falling is None:
-                return Direction.Down
-            
-            if (rot >= 0) and (rot <= 3):
-                rotate_sets = []
-                discard_sets = []
-                bomb_sets = []
-                clone_1 = board.clone()
-                rotate_sets = self.rotate_board(clone_1,rot)
-            elif(rot >= 4) and (rot <= 7) and self.trigger_dis == 1 and board.discards_remaining > 0:
-                rotate_sets = []
-                discard_sets = []
-                bomb_sets = []
-                clone_1 = board.clone()
-                discard_sets = self.discard_board(clone_1)
-                rotate_sets = self.rotate_board(clone_1,rot-4)
-            elif(rot == 8) and self.trigger_bomb == 1:
-                rotate_sets = []
-                discard_sets = []
-                bomb_sets = []
-                clone_1 = board.clone()
-                bomb_sets = self.bomb_board(clone_1)
-
-            else:
-                break
-
-
-            if clone_1.falling is None:
-                return Direction.Down
-            
-
-            step = 0
-            while step < 11:
-                dir_sets = []
+        
+        for i in range(4):
+            clone_1 = board.clone()
+            rotate_sets_1 = self.rotate_board(clone_1, i)
+            for j in range(11):
                 clone_2 = clone_1.clone()
 
-                if (step >= 0) and (step<6):
-                    dir_sets = []
-                    dir_sets = self.direction_board_left(clone_2,step)
-                elif(step >= 6) and (step <11):
-                    dir_sets = []
-                    dir_sets = self.direction_board_right(clone_2,step - 5)
-                step = step + 1
+                if j < 6:
+                    actoin_sets_1 = self.direction_board_left(clone_2, j)
+                else:
+                    actoin_sets_1 = self.direction_board_right(clone_2, j-5)
 
-                sets = []
+            
+                drop_sets_1 = self.Drop_board(clone_2)
 
-                if clone_2.falling is None:
+                if(clone_2.falling is None):
                     return Direction.Down
-                drop_sets = self.Drop_board(clone_2)
-                sets = bomb_sets + discard_sets + rotate_sets + dir_sets + drop_sets
+                for q in range(4):
+                    next_clone_1 = clone_2.clone()
+                    rotate_sets_2 = self.rotate_board(next_clone_1, q)
 
-                score =  (-0.510066 * self.sum_column_height(clone_2)
-                          + 0.760666 * self.check_elinmating(clone_2, board)
-                          - 0.35663 * self.check_holes(clone_2) #0.35663
-                          - 0.184483 * self.var_column_height(clone_2)
-                          #- 0.05 * self.get_well(clone_2)
-                          - 0.05 * self.get_blocked_cells(clone_2)
-                          - 0.05 * self.get_max_height(clone_2)
-                          - 0.05 * self.get_row_transition(clone_2)
-                          - 0.05 * self.get_col_transition(clone_2)
-                          + 0.05 * self.calculate_single_column_height(clone_2,0)
-                          #+ 1.0 * self.check_first_col(clone_2)
-                          )
-                
-                if score > best_score:
-                    tmp = clone_2
-                    best_score = score
-                    best_sets = sets
+                    for p in range(11):
+                        next_clone_2 = next_clone_1.clone()
+                        if p < 6:
+                            actoin_sets_2 = self.direction_board_left(next_clone_2, p)
+                        else:
+                            actoin_sets_2 = self.direction_board_right(next_clone_2, p-5)
 
-        if tmp.score > 8000:
-            self.trigger_dis = 1
+                        if(next_clone_2.falling is None):
+                            return Direction.Down
 
-        if self.sum_column_height(tmp) > 0:
-            self.trigger_bomb = 1
-        #time.sleep(3)
-        print(self.calculate_single_column_height(tmp,0))
+                        drop_sets_2 = self.Drop_board(next_clone_2)
 
-        return best_sets
+                        sets_1 = rotate_sets_1 + actoin_sets_1 + drop_sets_1
+                        sets_2 = rotate_sets_2 + actoin_sets_2 + drop_sets_2
 
+                        score = (
+                            -0.510066*self.sum_column_height(next_clone_2)
+                            +0.760666*self.check_elinmating(next_clone_2,board)
+                            -0.35663*self.check_holes(next_clone_2)
+                            -0.184483*self.var_column_height(next_clone_2)
+                            #- 0.1 * self.get_blocked_cells(next_clone_2)
+                            #- 0.1 * self.get_max_height(next_clone_2)
+                            #- 0.1 * self.get_row_transition(next_clone_2)
+                            #- 0.1 * self.get_col_transition(next_clone_2)
+                            #- 1 * self.calculate_single_column_height(next_clone_2,0)
+                            #+ 1 * self.get_full_row(next_clone_2)
+                        )
 
+                        if(score > best_score):
+                            best_score = score
+                            self.best_sets_1 = sets_1
+                            self.best_sets_2 = sets_2
+        return self.best_sets_1
+
+                        
 
 
 
