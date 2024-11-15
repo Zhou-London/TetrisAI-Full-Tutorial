@@ -171,7 +171,7 @@ class MyPlayer(Player):
         elif gap > 400:
             return 10.0
         elif gap > 200:
-            return 1.0
+            return 5.0
         elif gap > 50:
             return 0.0
         
@@ -289,8 +289,11 @@ class MyPlayer(Player):
             
                 drop_sets_1 = self.Drop_board(clone_2)
 
+
                 if(clone_2.falling is None):
                     return Direction.Down
+
+
                 for q in range(4):
                     next_clone_1 = clone_2.clone()
                     rotate_sets_2 = self.rotate_board(next_clone_1, q)
@@ -311,22 +314,30 @@ class MyPlayer(Player):
                         sets_2 = rotate_sets_2 + actoin_sets_2 + drop_sets_2
 
                         score = (
-                            -0.510066*self.sum_column_height(next_clone_2)
-                            +0.760666*self.check_elinmating(next_clone_2,board)
-                            -0.35663*self.check_holes(next_clone_2)
-                            -0.184483*self.var_column_height(next_clone_2)
-                            #- 0.1 * self.get_blocked_cells(next_clone_2)
-                            #- 0.1 * self.get_max_height(next_clone_2)
-                            #- 0.1 * self.get_row_transition(next_clone_2)
-                            #- 0.1 * self.get_col_transition(next_clone_2)
-                            #- 1 * self.calculate_single_column_height(next_clone_2,0)
-                            #+ 1 * self.get_full_row(next_clone_2)
+                            -0.510066*self.sum_column_height(next_clone_2)#aggreate height
+                            +0.760666*self.check_elinmating(next_clone_2,board)#line elinmination
+                            -0.5*self.check_holes(next_clone_2)#holes
+                            -0.184483*self.var_column_height(next_clone_2)#bumpiness
+                            - 0.05 * self.get_blocked_cells(next_clone_2)#cells above the hole
+                            - 0.05 * self.get_max_height(next_clone_2)#highest height
+                            - 0.05 * self.get_row_transition(next_clone_2)
+                            - 0.05 * self.get_col_transition(next_clone_2)
+                            #- 0.05 * self.calculate_single_column_height(next_clone_2,0)#height of first column
+                            #+ 0.05 * self.get_full_row(next_clone_2)#continued full row except the first column
                         )
 
                         if(score > best_score):
                             best_score = score
                             self.best_sets_1 = sets_1
                             self.best_sets_2 = sets_2
+                            tmp = next_clone_2
+
+        if(self.sum_column_height(tmp) > 100):
+            self.best_sets_1 = []
+            self.best_sets_2 = []
+            return Action.Bomb
+
+        
         return self.best_sets_1
 
                         
