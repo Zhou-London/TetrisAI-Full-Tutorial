@@ -172,7 +172,7 @@ class MyPlayer(Player):
             return 10.0
         elif gap > 200:
             return 5.0
-        elif gap > 50:
+        elif gap > 60:
             return 0.0
         
         return 0.0
@@ -266,10 +266,12 @@ class MyPlayer(Player):
 
     def choose_action(self, board):
 
+        '''
         if(self.best_sets_2):
             tmp_sets = self.best_sets_2
             self.best_sets_2 = []
             return tmp_sets
+        '''
 
 
         best_score = -1000
@@ -298,12 +300,12 @@ class MyPlayer(Player):
                     next_clone_1 = clone_2.clone()
                     rotate_sets_2 = self.rotate_board(next_clone_1, q)
 
-                    for p in range(11):
+                    for p in range(7):
                         next_clone_2 = next_clone_1.clone()
-                        if p < 6:
+                        if p < 3:
                             actoin_sets_2 = self.direction_board_left(next_clone_2, p)
                         else:
-                            actoin_sets_2 = self.direction_board_right(next_clone_2, p-5)
+                            actoin_sets_2 = self.direction_board_right(next_clone_2, p-3)
 
                         if(next_clone_2.falling is None):
                             return Direction.Down
@@ -314,16 +316,16 @@ class MyPlayer(Player):
                         sets_2 = rotate_sets_2 + actoin_sets_2 + drop_sets_2
 
                         score = (
-                            -0.510066*self.sum_column_height(next_clone_2)#aggreate height
-                            +0.760666*self.check_elinmating(next_clone_2,board)#line elinmination
-                            -0.5*self.check_holes(next_clone_2)#holes
-                            -0.184483*self.var_column_height(next_clone_2)#bumpiness
+                            -0.510066 * self.sum_column_height(next_clone_2)#aggreate height
+                            +0.760666 * self.check_elinmating(next_clone_2,board)#line elinmination
+                            -5.0 * self.check_holes(next_clone_2)#holes
+                            -0.184483 * self.var_column_height(next_clone_2)#bumpiness
                             - 0.05 * self.get_blocked_cells(next_clone_2)#cells above the hole
                             - 0.05 * self.get_max_height(next_clone_2)#highest height
                             - 0.05 * self.get_row_transition(next_clone_2)
                             - 0.05 * self.get_col_transition(next_clone_2)
-                            #- 0.05 * self.calculate_single_column_height(next_clone_2,0)#height of first column
-                            #+ 0.05 * self.get_full_row(next_clone_2)#continued full row except the first column
+                            - 3.0 * self.calculate_single_column_height(next_clone_2,0)#height of first column
+                            + 0.5 * self.get_full_row(next_clone_2)#continued full row except the first column
                         )
 
                         if(score > best_score):
