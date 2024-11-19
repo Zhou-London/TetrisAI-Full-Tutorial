@@ -18,6 +18,9 @@ class MyPlayer(Player):
         self.check_discard = 0
         self.discard_nums = 10
         self.bomb_nums = 5
+        self.case_1 = True
+        self.case_2 = False
+        self.bomb_pending = False
 
         
     def print_board(self, board):
@@ -56,7 +59,7 @@ class MyPlayer(Player):
         #column_list = self.get_column_height_list(board)
         bumpness = 0
         for i in range(board.width - 1):
-            bumpness = bumpness + abs(column_list[i] - column_list[i+1])
+            bumpness = bumpness + (column_list[i] - column_list[i+1]) ** 2
 
         return bumpness
     
@@ -170,9 +173,9 @@ class MyPlayer(Player):
     def check_elinmating(self,clone_board, original_board): #Fourth assesment: Lines elimnation
         gap = clone_board.score - original_board.score
         if gap > 1600:
-            return 100.0
+            return 1000.0
         elif gap > 400:
-            return -4.0
+            return -10.0
         elif gap > 100:
             return -8.0
         elif gap > 24:
@@ -217,46 +220,58 @@ class MyPlayer(Player):
 
 
     def rotate_board(self,board,time): #This function will rotate the board and return the command sets
-        if time == 0:
-            board.move(None)
-            return [None]
-        elif time == 1:
-            board.rotate(Rotation.Clockwise)
-            return [Rotation.Clockwise]
-        elif time == 2:
-            board.rotate(Rotation.Clockwise)
-            board.rotate(Rotation.Clockwise)
-            return [Rotation.Clockwise,Rotation.Clockwise]
-        elif time == 3:
-            board.rotate(Rotation.Anticlockwise)
-            return [Rotation.Anticlockwise]
-        else:
-            raise IndexError("Index out of range")
+        try:
+            if time == 0:
+                board.move(None)
+                return [None]
+            elif time == 1:
+                board.rotate(Rotation.Clockwise)
+                return [Rotation.Clockwise]
+            elif time == 2:
+                board.rotate(Rotation.Clockwise)
+                board.rotate(Rotation.Clockwise)
+                return [Rotation.Clockwise,Rotation.Clockwise]
+            elif time == 3:
+                board.rotate(Rotation.Anticlockwise)
+                return [Rotation.Anticlockwise]
+            else:
+                raise IndexError("Index out of range")
+        except Exception:
+            return []
 
     def direction_board_left(self, board, step):
-        return_list = []
-        if step == 0:
-            return_list.append(None)
+        try:
+            return_list = []
+            if step == 0:
+                return_list.append(None)
+                return return_list
+            for i in range(step):
+                board.move(Direction.Left)
+                return_list.append(Direction.Left)
             return return_list
-        for i in range(step):
-            board.move(Direction.Left)
-            return_list.append(Direction.Left)
-        return return_list
+        except Exception:
+            return []
     
 
     def direction_board_right(self, board, step):
-        return_list = []
-        if step == 0:
-            return_list.append(None)
+        try:
+            return_list = []
+            if step == 0:
+                return_list.append(None)
+                return return_list
+            for i in range(step):
+                board.move(Direction.Right)
+                return_list.append(Direction.Right)
             return return_list
-        for i in range(step):
-            board.move(Direction.Right)
-            return_list.append(Direction.Right)
-        return return_list
+        except Exception:
+            return []
     
     def Drop_board(self,board):
-        board.move(Direction.Drop)
-        return [Direction.Drop]
+        try:
+            board.move(Direction.Drop)
+            return [Direction.Drop]
+        except Exception:
+            return []
     
     def discard_board(self,board):
         board.discard()
@@ -271,169 +286,71 @@ class MyPlayer(Player):
 
         score_1 = 0
         score_2 = 0
-        score = 0
         best_score_1 = -1000
-        best_score_2 = -1000
         best_score = -1000
-        best_sets_1 = []
-        use_dis = False
-
         clone_0 = board.clone()
 
-        tmp_check = self.get_column_height_list(board)
+        if self.case_2 == True:
+            return Action.Bomb
 
-
-        '''
-        if(self.sum_column_height(board, tmp_check) > 80) and self.bomb_nums > 0:
-            self.bomb_nums = self.bomb_nums - 1
-            bomb_sets = self.bomb_board(clone_0)
-        else:
-            bomb_sets = []
-
-        if board.falling.shape is not Shape.I and board.falling.shape is not Shape.B:
-            self.check_discard = self.check_discard + 1
-            if(self.check_discard > 12):
-                self.check_discard = 0
-                use_dis = True
-        else:
-            self.check_discard = 0
-            use_dis = False
-
-
-        if(use_dis == True) and self.discard_nums > 0:
-            use_dis = False
-            self.discard_nums = self.discard_nums - 1
-            discard_sets = self.discard_board(clone_0)
-        else:
-            discard_sets = []
-
-        '''
-
-
-        for i in range(4):
-            clone_1 = clone_0.clone()
-            rotate_sets_1 = self.rotate_board(clone_1, i)
-            for j in range(11):
-                clone_2 = clone_1.clone()
-
-                if j < 6:
-                    actoin_sets_1 = self.direction_board_left(clone_2, j)
-                else:
-                    actoin_sets_1 = self.direction_board_right(clone_2, j-5)
-
-            
-                drop_sets_1 = self.Drop_board(clone_2)
-
-                sets_1 = rotate_sets_1 + actoin_sets_1 + drop_sets_1
-                list_1 = self.get_column_height_list(clone_2)
-
-                score_1 = (
-                    #- 0.625 * self.sum_column_height(clone_2, list_1)#aggreate height 0.510066
-                    + 1.0 * self.check_elinmating(clone_2,clone_0)#line elinmination
-                    - 5.0 * self.check_holes(clone_2)#holes
-                    - 0.5 * self.var_column_height(clone_2, list_1)#bumpiness 0.184483
-                    #- 0.05 * self.get_blocked_cells(next_clone_2, list)#cells above the hole
-                    - 0.5 * self.get_max_height(clone_2)#highest height
-                    #- 1.0 * self.get_row_transition(clone_2)
-                    #- 1.0 * self.get_col_transition(clone_2)
-                    #+ 1.0 * self.check_first_col(clone_2, list_1)#height of first column
-                    #+ 6.0 * self.get_full_row(clone_2)#continued full row except the first column
-                )
-                if(score_1 > best_score_1):
-                    best_score_1 = score_1
-                    best_sets_1 = sets_1
-
-
-                if(clone_2.falling is None):
-                    return best_sets_1
-                
-                for q in range(4):
-                    next_clone_1 = clone_2.clone()
-                    rotate_sets_2 = self.rotate_board(next_clone_1, q)
-
-                    for p in range(11):
-                        next_clone_2 = next_clone_1.clone()
-                        if p < 6:
-                            actoin_sets_2 = self.direction_board_left(next_clone_2, p)
-                        else:
-                            actoin_sets_2 = self.direction_board_right(next_clone_2, p-5)                            
-                            
-                        if(next_clone_2.falling is None):
-                            return best_sets_1
-
-                        drop_sets_2 = self.Drop_board(next_clone_2)
-                        sets_2 = rotate_sets_2 + actoin_sets_2 + drop_sets_2
-
-                        list = self.get_column_height_list(next_clone_2)
-
-                        score_2 = (
-                            - 0.625 * self.sum_column_height(next_clone_2, list)#aggreate height 0.510066
-                            + 1.0 * self.check_elinmating(next_clone_2,clone_2)#line elinmination
-                            - 5.0 * self.check_holes(next_clone_2)#holes
-                            - 0.5 * self.var_column_height(next_clone_2, list)#bumpiness 0.184483
-                            #- 0.05 * self.get_blocked_cells(next_clone_2, list)#cells above the hole
-                            #- 0.5 * self.get_max_height(next_clone_2)#highest height
-                            #- 1.0 * self.get_row_transition(next_clone_2)
-                            #- 1.0 * self.get_col_transition(next_clone_2)
-                            #+ 1.0 * self.check_first_col(next_clone_2, list)#height of first column
-                            #+ 6.0 * self.get_full_row(next_clone_2)#continued full row except the first column
-                            + score_1
-                        )
-
-                        if(score_2 > best_score):
-                            best_score = score_2
-                            self.best_sets_1 = sets_1
-
-
-                        '''
-                        for shape in Shape:
-                            tmp_score = 1000
-                            score_3 = 0
-                            minimum_score = 0
-                            next_next_clone_0 = next_clone_2.clone()
-                            next_next_clone_0.falling = Block(shape)
-
-                            for rot_3 in range(4):
-                                next_next_clone_1 = next_next_clone_0.clone()
-                                rotate_sets_3 = self.rotate_board(next_next_clone_1,rot_3)
-
-                                for dir_3 in range(11):
-                                    next_next_clone_2 = next_next_clone_1.clone()
-                                    if dir_3 < 6:
-                                        actoin_sets_3 = self.direction_board_left(next_next_clone_2,dir_3)
-                                    else:
-                                        actoin_sets_3 = self.direction_board_right(next_next_clone_2,dir_3-5)
-
-                                    if(next_next_clone_2.falling is None):
-                                        return best_sets_1
-
-                                    drop_sets_3 = self.Drop_board(next_next_clone_2)
-
-                                    score_3 = (
-                                        - 0.510066 * self.sum_column_height(next_next_clone_2, list)#aggreate height 0.510066
-                                        #+ 0.760666 * self.check_elinmating(next_next_clone_2,clone_2)#line elinmination
-                                        #- 0.35663 * self.check_holes(next_next_clone_2)#holes
-                                        #- 0.184483 * self.var_column_height(next_next_clone_2, list)#bumpiness 0.184483
-                                        #- 0.05 * self.get_blocked_cells(next_clone_2, list)#cells above the hole
-                                        #- 5.0 * self.get_max_height(next_clone_2)#highest height
-                                        #- 0.05 * self.get_row_transition(next_clone_2)
-                                        #- 0.05 * self.get_col_transition(next_clone_2)
-                                        #+ 0.5 * self.check_first_col(next_clone_2, list)#height of first column
-                                        #+ 0.1 * self.get_full_row(next_clone_2)#continued full row except the first column
-                                    )
-
-                                    if score_3 < tmp_score:
-                                        tmp_score = score_3
-
-                        score = score_2 + tmp_score
-                        if score > best_score:
-                            best_score = score
-                            self.best_sets_1 = sets_1
-                        '''
-
-        return self.best_sets_1
-
-                        
+        if self.case_1 == True:
+            for i in range(4):
+                clone_1 = clone_0.clone()
+                rotate_sets_1 = self.rotate_board(clone_1, i)
+                for j in range(11):
+                    clone_2 = clone_1.clone()
+                    if j < 6:
+                        actoin_sets_1 = self.direction_board_left(clone_2, j)
+                    else:
+                        actoin_sets_1 = self.direction_board_right(clone_2, j-5)
+                    drop_sets_1 = self.Drop_board(clone_2)
+                    sets_1 = rotate_sets_1 + actoin_sets_1 + drop_sets_1
+                    list_1 = self.get_column_height_list(clone_2)
+                    score_1 = (
+                        #- 0.625 * self.sum_column_height(clone_2, list_1)#aggreate height 0.510066
+                        + 2.0 * self.check_elinmating(clone_2,clone_0)#line elinmination
+                        - 25.0 * self.check_holes(clone_2)#holes
+                        - 1.0 * self.var_column_height(clone_2, list_1)#bumpiness 0.184483
+                        #- 0.05 * self.get_blocked_cells(next_clone_2, list)#cells above the hole
+                        - 1.0 * self.get_max_height(clone_2)#highest height
+                        #- 1.0 * self.get_row_transition(clone_2)
+                        #- 1.0 * self.get_col_transition(clone_2)
+                        #+ 1.0 * self.check_first_col(clone_2, list_1)#height of first column
+                        #+ 6.0 * self.get_full_row(clone_2)#continued full row except the first column
+                    )
+                    if(score_1 > best_score_1):
+                        best_score_1 = score_1
+                        best_sets_1 = sets_1
+                    for q in range(4):
+                        next_clone_1 = clone_2.clone()
+                        next_clone_1.next = next_clone_1.falling
+                        rotate_sets_2 = self.rotate_board(next_clone_1, q)
+                        for p in range(11):
+                            next_clone_2 = next_clone_1.clone()
+                            if p < 6:
+                                actoin_sets_2 = self.direction_board_left(next_clone_2, p)
+                            else:
+                                actoin_sets_2 = self.direction_board_right(next_clone_2, p-5)                            
+                            drop_sets_2 = self.Drop_board(next_clone_2)
+                            list = self.get_column_height_list(next_clone_2)
+                            score_2 = (
+                                #- 0.625 * self.sum_column_height(next_clone_2, list)#aggreate height
+                                + 2.0 * self.check_elinmating(next_clone_2,clone_2)#line elinmination
+                                - 25.0 * self.check_holes(next_clone_2)#holes
+                                - 1.0 * self.var_column_height(next_clone_2, list)#bumpiness
+                                #- 0.05 * self.get_blocked_cells(next_clone_2, list)#cells above the hole
+                                - 1.0 * self.get_max_height(next_clone_2)#highest height
+                                #- 1.0 * self.get_row_transition(next_clone_2)
+                                #- 1.0 * self.get_col_transition(next_clone_2)
+                                #+ 1.0 * self.check_first_col(next_clone_2, list)#height of first column
+                                #+ 6.0 * self.get_full_row(next_clone_2)#continued full row except the first column
+                                + score_1
+                            )
+                            if(score_2 > best_score):
+                                best_score = score_2
+                                self.best_sets_1 = sets_1
+            return self.best_sets_1
+        
 
 
 
